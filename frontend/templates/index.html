@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FinTrack — Controle Financeiro</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+
+<!-- ── TOAST CONTAINER ── -->
+<div id="toastContainer" class="toast-container"></div>
+
+<!-- ══════════════════════════════════════════════════════════════════
+     AUTH SCREEN
+═══════════════════════════════════════════════════════════════════ -->
+<div id="authScreen" class="auth-screen hidden">
+  <div class="auth-card">
+    <div class="auth-logo">Fin<span>Track</span></div>
+    <p class="auth-subtitle">Seu controle financeiro pessoal</p>
+
+    <div class="auth-tabs">
+      <div class="auth-tab active" id="tab-login" onclick="switchAuthTab('login')">Entrar</div>
+      <div class="auth-tab" id="tab-register" onclick="switchAuthTab('register')">Criar conta</div>
+    </div>
+
+    <form id="formLogin" onsubmit="doLogin(event)">
+      <div class="form-group">
+        <label>E-mail</label>
+        <input type="email" id="loginEmail" placeholder="seu@email.com" required>
+      </div>
+      <div class="form-group">
+        <label>Senha</label>
+        <input type="password" id="loginPassword" placeholder="••••••••" required>
+      </div>
+      <button type="submit" class="btn btn-primary btn-full" style="margin-top:0.5rem;">Entrar</button>
+    </form>
+
+    <form id="formRegister" class="hidden" onsubmit="doRegister(event)">
+      <div class="form-group">
+        <label>Nome</label>
+        <input type="text" id="regName" placeholder="Seu nome" required>
+      </div>
+      <div class="form-group">
+        <label>E-mail</label>
+        <input type="email" id="regEmail" placeholder="seu@email.com" required>
+      </div>
+      <div class="form-group">
+        <label>Senha</label>
+        <input type="password" id="regPassword" placeholder="Mínimo 8 caracteres" required minlength="8">
+      </div>
+      <button type="submit" class="btn btn-primary btn-full" style="margin-top:0.5rem;">Criar conta</button>
+    </form>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════
+     APP SCREEN
+═══════════════════════════════════════════════════════════════════ -->
+<div id="appScreen" class="app-layout hidden">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">Fin<span style="color:#60a5fa;">Track</span></div>
+    <div class="sidebar-user">
+      <strong id="sidebarUserName"></strong>
+      <span id="sidebarUserEmail"></span>
+    </div>
+    <nav class="sidebar-nav">
+      <button class="nav-item active" id="nav-dashboard" onclick="navigateTo('dashboard')">
+        <i class="ti ti-layout-dashboard"></i> Dashboard
+      </button>
+<button class="nav-item" id="nav-budgets" onclick="navigateTo('budgets')">
+  <i class="ti ti-target"></i> Metas
+</button>
+      <button class="nav-item" id="nav-transactions" onclick="navigateTo('transactions')">
+        <i class="ti ti-list"></i> Lançamentos
+      </button>
+
+    </nav>
+    <div class="sidebar-footer">
+      <button class="nav-item" onclick="openNewTransaction()" style="background:rgba(96,165,250,0.12);color:#60a5fa;width:100%;">
+        <i class="ti ti-plus"></i> Novo lançamento
+      </button>
+      <button class="nav-item" onclick="doLogout()" style="margin-top:4px;">
+        <i class="ti ti-logout"></i> Sair
+      </button>
+    </div>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <main class="main-content">
+
+    <!-- ── DASHBOARD PAGE ── -->
+    <div id="page-dashboard" class="page">
+      <div class="page-header" style="display:flex;justify-content:space-between;align-items:flex-start;">
+        <div>
+          <h1>Dashboard</h1>
+          <p>Visão geral das suas finanças</p>
+        </div>
+        <div class="month-nav">
+          <button onclick="prevMonth()"><i class="ti ti-chevron-left"></i></button>
+          <span class="monthDisplay"></span>
+          <button onclick="nextMonth()"><i class="ti ti-chevron-right"></i></button>
+        </div>
+      </div>
+
+      <div class="metrics-grid">
+        <div class="metric-card">
+          <div class="metric-label"><i class="ti ti-arrow-down-circle" style="color:#10b981;font-size:15px;"></i> Entradas</div>
+          <div class="metric-value income" id="totalIncome">R$ 0,00</div>
+          <div class="metric-sub">Receitas do mês</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label"><i class="ti ti-arrow-up-circle" style="color:#ef4444;font-size:15px;"></i> Saídas</div>
+          <div class="metric-value expense" id="totalExpense">R$ 0,00</div>
+          <div class="metric-sub">Despesas do mês</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label"><i class="ti ti-wallet" style="color:#2563eb;font-size:15px;"></i> Saldo</div>
+          <div class="metric-value positive" id="totalBalance">R$ 0,00</div>
+          <div class="metric-sub">Resultado do mês</div>
+        </div>
+      </div>
+
+      <div class="grid-2" style="margin-bottom:1rem;">
+        <div class="card">
+          <div class="card-title"><i class="ti ti-chart-donut"></i> Gastos por categoria</div>
+          <div class="chart-wrap"><canvas id="pieChart" role="img" aria-label="Gráfico de gastos por categoria"></canvas></div>
+          <div id="pieLegend" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;"></div>
+        </div>
+        <div class="card">
+          <div class="card-title"><i class="ti ti-chart-bar"></i> Fluxo do ano</div>
+          <div class="chart-wrap"><canvas id="barChart" role="img" aria-label="Gráfico de entradas e saídas mensais"></canvas></div>
+          <div style="display:flex;gap:12px;margin-top:10px;font-size:11px;color:#6b7280;">
+            <span style="display:flex;align-items:center;gap:4px;"><span style="width:9px;height:9px;border-radius:2px;background:#10b981;display:inline-block;"></span>Entradas</span>
+            <span style="display:flex;align-items:center;gap:4px;"><span style="width:9px;height:9px;border-radius:2px;background:#ef4444;display:inline-block;"></span>Saídas</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title" style="justify-content:space-between;">
+          <span><i class="ti ti-clock"></i> Últimos lançamentos</span>
+          <button class="btn btn-ghost" style="font-size:12px;padding:5px 10px;" onclick="navigateTo('transactions')">Ver todos</button>
+        </div>
+        <div id="recentList"></div>
+      </div>
+    </div>
+
+    <!-- ── TRANSACTIONS PAGE ── -->
+    <div id="page-transactions" class="page hidden">
+      <div class="page-header" style="display:flex;justify-content:space-between;align-items:flex-start;">
+        <div>
+          <h1>Lançamentos</h1>
+          <p>Histórico completo de entradas e saídas</p>
+        </div>
+        <button class="btn btn-primary" onclick="openNewTransaction()">
+          <i class="ti ti-plus"></i> Novo lançamento
+        </button>
+      </div>
+
+      <div class="card">
+        <div class="filter-row">
+          <select id="filterType" onchange="loadTransactions()">
+            <option value="all">Todos os tipos</option>
+            <option value="income">Entradas</option>
+            <option value="expense">Saídas</option>
+          </select>
+          <select id="filterCat" onchange="loadTransactions()">
+            <option value="all">Todas as categorias</option>
+          </select>
+          <select id="filterMonth" onchange="loadTransactions()">
+            <option value="all">Todos os meses</option>
+          </select>
+        </div>
+        <div id="txList"></div>
+      </div>
+    </div>
+
+    <!-- ── CATEGORIES PAGE ── -->
+<!-- ── BUDGETS PAGE ── -->
+<div id="page-budgets" class="page hidden">
+  <div class="page-header" style="display:flex;justify-content:space-between;align-items:flex-start;">
+    <div>
+      <h1>Metas de Orçamento</h1>
+      <p>Controle quanto quer gastar por categoria</p>
+    </div>
+    <button class="btn btn-primary" onclick="openNewBudget()">
+      <i class="ti ti-plus"></i> Nova meta
+    </button>
+  </div>
+  <div id="budgetGrid" style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;"></div>
+</div>
+<!-- ── BUDGETS PAGE ── -->
+<div id="page-budgets" class="page hidden">
+  <div class="page-header" style="display:flex;justify-content:space-between;align-items:flex-start;">
+    <div>
+      <h1>Metas de Orçamento</h1>
+      <p>Controle quanto quer gastar por categoria</p>
+    </div>
+    <button class="btn btn-primary" onclick="openNewBudget()">
+      <i class="ti ti-plus"></i> Nova meta
+    </button>
+  </div>
+  <div id="budgetGrid" style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;"></div>
+</div>
+    <div id="page-categories" class="page hidden">
+      <div class="page-header" style="display:flex;justify-content:space-between;align-items:flex-start;">
+        <div>
+          <h1>Categorias</h1>
+          <p>Distribuição dos gastos — <span class="monthDisplay"></span></p>
+        </div>
+        <div class="month-nav">
+          <button onclick="prevMonth();loadCategoriesPage()"><i class="ti ti-chevron-left"></i></button>
+          <span class="monthDisplay"></span>
+          <button onclick="nextMonth();loadCategoriesPage()"><i class="ti ti-chevron-right"></i></button>
+        </div>
+      </div>
+      <div class="card">
+        <div id="catGrid"></div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════
+     NEW TRANSACTION MODAL
+═══════════════════════════════════════════════════════════════════ -->
+<!-- BUDGET MODAL -->
+<div id="budgetModal" class="modal-overlay hidden" onclick="if(event.target===this)closeBudgetModal()">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Nova meta de orçamento</div>
+      <button class="modal-close" onclick="closeBudgetModal()"><i class="ti ti-x"></i></button>
+    </div>
+    <form id="budgetForm" onsubmit="submitBudget(event)">
+      <div class="form-group">
+        <label>Categoria</label>
+        <select id="budgetCat" required></select>
+      </div>
+      <div class="form-group">
+        <label>Valor limite (R$)</label>
+        <input type="number" id="budgetAmount" placeholder="0,00" step="0.01" min="1" required>
+      </div>
+      <div class="form-row cols-2">
+        <div class="form-group">
+          <label>Mês</label>
+          <select id="budgetMonth">
+            <option value="1">Janeiro</option>
+            <option value="2">Fevereiro</option>
+            <option value="3">Março</option>
+            <option value="4">Abril</option>
+            <option value="5">Maio</option>
+            <option value="6">Junho</option>
+            <option value="7">Julho</option>
+            <option value="8">Agosto</option>
+            <option value="9">Setembro</option>
+            <option value="10">Outubro</option>
+            <option value="11">Novembro</option>
+            <option value="12">Dezembro</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Ano</label>
+          <input type="number" id="budgetYear" value="2026" min="2024" max="2030">
+        </div>
+      </div>
+      <button type="submit" class="btn btn-primary btn-full">Salvar meta</button>
+    </form>
+  </div>
+</div>
+<!-- BUDGET MODAL -->
+<div id="budgetModal" class="modal-overlay hidden" onclick="if(event.target===this)closeBudgetModal()">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Nova meta de orçamento</div>
+      <button class="modal-close" onclick="closeBudgetModal()"><i class="ti ti-x"></i></button>
+    </div>
+    <form id="budgetForm" onsubmit="submitBudget(event)">
+      <div class="form-group">
+        <label>Categoria</label>
+        <select id="budgetCat" required></select>
+      </div>
+      <div class="form-group">
+        <label>Valor limite (R$)</label>
+        <input type="number" id="budgetAmount" placeholder="0,00" step="0.01" min="1" required>
+      </div>
+      <div class="form-row cols-2">
+        <div class="form-group">
+          <label>Mês</label>
+          <select id="budgetMonth">
+            <option value="1">Janeiro</option>
+            <option value="2">Fevereiro</option>
+            <option value="3">Março</option>
+            <option value="4">Abril</option>
+            <option value="5">Maio</option>
+            <option value="6">Junho</option>
+            <option value="7">Julho</option>
+            <option value="8">Agosto</option>
+            <option value="9">Setembro</option>
+            <option value="10">Outubro</option>
+            <option value="11">Novembro</option>
+            <option value="12">Dezembro</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Ano</label>
+          <input type="number" id="budgetYear" value="2026" min="2024" max="2030">
+        </div>
+      </div>
+      <button type="submit" class="btn btn-primary btn-full">Salvar meta</button>
+    </form>
+  </div>
+</div>
+<div id="txModal" class="modal-overlay hidden" onclick="if(event.target===this)closeTxModal()">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Novo lançamento</div>
+      <button class="modal-close" onclick="closeTxModal()"><i class="ti ti-x"></i></button>
+    </div>
+
+    <form id="txForm" onsubmit="submitTransaction(event)">
+      <input type="hidden" id="txTypeHidden" value="expense">
+
+      <div class="type-toggle">
+        <button type="button" class="type-btn active expense" id="typeBtn-expense" onclick="setTxType('expense')">
+          <i class="ti ti-arrow-up-circle"></i> Saída
+        </button>
+        <button type="button" class="type-btn" id="typeBtn-income" onclick="setTxType('income')">
+          <i class="ti ti-arrow-down-circle"></i> Entrada
+        </button>
+      </div>
+
+      <div class="form-row cols-2">
+        <div class="form-group">
+          <label>Valor (R$)</label>
+          <input type="number" id="txAmount" placeholder="0,00" step="0.01" min="0.01" required>
+        </div>
+        <div class="form-group">
+          <label>Data</label>
+          <input type="date" id="txDate" required>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Descrição</label>
+        <input type="text" id="txDesc" placeholder="Ex: Almoço, salário de junho..." required>
+      </div>
+
+      <div class="form-row cols-2">
+        <div class="form-group">
+          <label>Categoria</label>
+          <select id="txCatSelect" required></select>
+        </div>
+        <div class="form-group">
+          <label>Forma de pagamento</label>
+          <select id="txPayMethod">
+            <option>Dinheiro</option>
+            <option>PIX</option>
+            <option>Cartão de débito</option>
+            <option>Cartão de crédito</option>
+            <option>Transferência</option>
+            <option>Débito automático</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Observação (opcional)</label>
+        <input type="text" id="txNote" placeholder="Detalhes adicionais...">
+      </div>
+
+      <button type="submit" class="btn btn-primary btn-full">Salvar lançamento</button>
+    </form>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script src="/static/js/app.js"></script>
+</body>
+</html>
