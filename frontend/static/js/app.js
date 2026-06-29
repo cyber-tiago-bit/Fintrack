@@ -394,3 +394,33 @@ document.addEventListener('DOMContentLoaded', () => {
     showAuth();
   }
 });
+function exportarCSV() {
+  const type = document.getElementById('filterType').value;
+  const month = document.getElementById('filterMonth').value;
+  let url = `/api/transactions/?year=${currentYear}`;
+  if (type !== 'all') url += `&type=${type}`;
+  if (month !== 'all') url += `&month=${month}`;
+
+  apiFetch(url).then(txs => {
+    if (!txs.length) { toast('Nenhum lancamento para exportar.', 'error'); return; }
+
+    const header = ['Data', 'Descricao', 'Tipo', 'Categoria', 'Valor', 'Forma de Pagamento', 'Observacao'];
+    const rows = txs.map(tx => [
+      fmtDate(tx.date),
+      tx.description,
+      tx.type === 'income' ? 'Entrada' : 'Saida',
+      tx.category?.name || '',
+      tx.amount.toFixed(2).replace('.', ','),
+      tx.payment_method,
+      tx.note || ''
+    ]);
+
+    const csv = [header, ...rows].map(r => r.map(c => `"${c}"`).join(';')).join('\n');
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `fintrack_${currentYear}_${String(currentMonth).padStart(2,'0')}.csv`;
+    link.click();
+    toast('Exportado com sucesso!');
+  });
+}

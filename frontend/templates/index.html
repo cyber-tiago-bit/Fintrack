@@ -156,9 +156,14 @@
           <h1>Lançamentos</h1>
           <p>Histórico completo de entradas e saídas</p>
         </div>
-        <button class="btn btn-primary" onclick="openNewTransaction()">
-          <i class="ti ti-plus"></i> Novo lançamento
-        </button>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-ghost" onclick="exportarCSV()">
+            <i class="ti ti-download"></i> Exportar CSV
+          </button>
+          <button class="btn btn-primary" onclick="openNewTransaction()">
+            <i class="ti ti-plus"></i> Novo lançamento
+          </button>
+        </div>
       </div>
 
       <div class="card">
