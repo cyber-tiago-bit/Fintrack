@@ -99,6 +99,7 @@ function navigateTo(page) {
   if (page === 'transactions') loadTransactions();
   if (page === 'categories') loadCategoriesPage();
   if (page === 'budgets') loadBudgetsPage();
+  if (page === 'recurring') loadRecurringPage();
 }
 
 function updateMonthDisplay() {
@@ -423,4 +424,100 @@ function exportarCSV() {
     link.click();
     toast('Exportado com sucesso!');
   });
+}
+// ── RECURRING ────────────────────────────────────────────────────────────────
+async function loadRecurringPage() {
+  const list = document.getElementById('recurringList');
+  list.innerHTML = '<p style="color:var(--text-3)">Carregando...</p>';
+  const items = await apiFetch('/api/recurring/');
+  if (!items.length) {
+    list.innerHTML = '<div class="empty-state"><i class="ti ti-repeat"></i><p>Nenhum lancamento recorrente cadastrado.<br>Clique em "Novo recorrente" para comecar.</p></div>';
+    return;
+  }
+  const freqLabel = { monthly: 'Mensal', weekly: 'Semanal', yearly: 'Anual' };
+  list.innerHTML = items.map(r => {
+    const color = r.category?.color || '#898781';
+    const icon = r.category?.icon || 'ti-tag';
+    return `<div class="tx-item">
+      <div class="tx-dot" style="background:${color}20;">
+        <i class="ti ${icon}" style="color:${color};font-size:16px;"></i>
+      </div>
+      <div class="tx-info">
+        <div class="tx-desc">${r.description} <span class="badge ${r.type === 'income' ? 'badge-income' : 'badge-expense'}">${r.type === 'income' ? 'Entrada' : 'Saida'}</span></div>
+        <div class="tx-meta">${r.category?.name || ''} · ${freqLabel[r.frequency] || r.frequency} · desde ${fmtDate(r.start_date)}</div>
+      </div>
+      <div class="tx-right" style="display:flex;align-items:center;gap:8px;">
+        <div>
+          <div class="tx-amount ${r.type}">${r.type === 'income' ? '+' : '-'}${fmtMoney(r.amount)}</div>
+          <div style="font-size:11px;color:var(--text-3);text-align:right;">${r.active ? 'Ativo' : 'Inativo'}</div>
+        </div>
+        <button class="btn btn-ghost" style="font-size:12px;padding:5px 8px;" onclick="gerarLancamento(${r.id})" title="Gerar lancamento hoje">
+          <i class="ti ti-player-play"></i>
+        </button>
+        <button class="btn-danger" onclick="deleteRecurring(${r.id})">
+          <i class="ti ti-trash"></i>
+        </button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function openNewRecurring() {
+  document.getElementById('recurringModal').classList.remove('hidden');
+  document.getElementById('recurringDate').value = new Date().toISOString().split('T')[0];
+  setRecurringType('expense');
+}
+
+function closeRecurringModal() {
+  document.getElementById('recurringModal').classList.add('hidden');
+  document.getElementById('recurringForm').reset();
+}
+
+function setRecurringType(type) {
+  document.querySelectorAll('.rec-type-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(`recTypeBtn-${type}`).classList.add('active', type);
+  document.getElementById('recurringTypeHidden').value = type;
+  const cats = allCategories.filter(c => c.type === type);
+  document.getElementById('recurringCat').innerHTML = cats.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+}
+
+async function submitRecurring(e) {
+  e.preventDefault();
+  const btn = e.target.querySelector('.btn-primary');
+  btn.disabled = true; btn.textContent = 'Salvando...';
+  try {
+    await apiFetch('/api/recurring/', {
+      method: 'POST',
+      body: JSON.stringify({
+        description: document.getElementById('recurringDesc').value,
+        amount: parseFloat(document.getElementById('recurringAmount').value),
+        type: document.getElementById('recurringTypeHidden').value,
+        frequency: document.getElementById('recurringFreq').value,
+        start_date: document.getElementById('recurringDate').value,
+        payment_method: document.getElementById('recurringPayMethod').value,
+        note: document.getElementById('recurringNote').value || null,
+        category_id: parseInt(document.getElementById('recurringCat').value),
+      })
+    });
+    toast('Recorrente criado!');
+    closeRecurringModal();
+    loadRecurringPage();
+  } catch (err) { toast(err.message, 'error'); }
+  finally { btn.disabled = false; btn.textContent = 'Salvar'; }
+}
+
+async function gerarLancamento(id) {
+  if (!confirm('Gerar um lancamento para hoje com base neste recorrente?')) return;
+  try {
+    await apiFetch(`/api/recurring/${id}/gerar`, { method: 'POST' });
+    toast('Lancamento gerado com sucesso!');
+    loadDashboard();
+  } catch (err) { toast(err.message, 'error'); }
+}
+
+async function deleteRecurring(id) {
+  if (!confirm('Excluir este recorrente?')) return;
+  await apiFetch(`/api/recurring/${id}`, { method: 'DELETE' });
+  toast('Recorrente excluido.');
+  loadRecurringPage();
 }

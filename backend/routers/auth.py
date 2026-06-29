@@ -9,23 +9,23 @@ from ..schemas.user import UserCreate, UserOut, Token, LoginForm
 router = APIRouter(prefix="/api/auth", tags=["Autenticação"])
 
 DEFAULT_CATEGORIES = [
-    {"name": "Alimentação", "color": "#eda100", "icon": "ti-tools-kitchen-2", "type": TransactionType.expense},
+    {"name": "Alimentacao", "color": "#f59e0b", "icon": "ti-tools-kitchen-2", "type": TransactionType.expense},
     {"name": "Moradia", "color": "#2a78d6", "icon": "ti-home", "type": TransactionType.expense},
-    {"name": "Transporte", "color": "#4a3aa7", "icon": "ti-car", "type": TransactionType.expense},
-    {"name": "Saúde", "color": "#e34948", "icon": "ti-heart", "type": TransactionType.expense},
-    {"name": "Fatura cartão", "color": "#e87ba4", "icon": "ti-credit-card", "type": TransactionType.expense},
-    {"name": "Internet", "color": "#1baf7a", "icon": "ti-wifi", "type": TransactionType.expense},
-    {"name": "Água", "color": "#17a5c8", "icon": "ti-droplet", "type": TransactionType.expense},
-    {"name": "Energia", "color": "#f59e0b", "icon": "ti-bolt", "type": TransactionType.expense},
-    {"name": "Celular", "color": "#eb6834", "icon": "ti-device-mobile", "type": TransactionType.expense},
+    {"name": "Transporte", "color": "#7c3aed", "icon": "ti-car", "type": TransactionType.expense},
+    {"name": "Saude", "color": "#e34948", "icon": "ti-heart", "type": TransactionType.expense},
+    {"name": "Fatura cartao", "color": "#db2777", "icon": "ti-credit-card", "type": TransactionType.expense},
+    {"name": "Internet", "color": "#0891b2", "icon": "ti-wifi", "type": TransactionType.expense},
+    {"name": "Agua", "color": "#06b6d4", "icon": "ti-droplet", "type": TransactionType.expense},
+    {"name": "Energia", "color": "#d97706", "icon": "ti-bolt", "type": TransactionType.expense},
+    {"name": "Celular", "color": "#ea580c", "icon": "ti-device-mobile", "type": TransactionType.expense},
     {"name": "Lazer", "color": "#8b5cf6", "icon": "ti-confetti", "type": TransactionType.expense},
-    {"name": "Educação", "color": "#10b981", "icon": "ti-book", "type": TransactionType.expense},
-    {"name": "Vestuário", "color": "#f43f5e", "icon": "ti-shirt", "type": TransactionType.expense},
-    {"name": "Outros gastos", "color": "#898781", "icon": "ti-dots", "type": TransactionType.expense},
-    {"name": "Salário", "color": "#1baf7a", "icon": "ti-cash", "type": TransactionType.income},
-    {"name": "Freelance", "color": "#2a78d6", "icon": "ti-briefcase", "type": TransactionType.income},
-    {"name": "Investimentos", "color": "#4a3aa7", "icon": "ti-trending-up", "type": TransactionType.income},
-    {"name": "Outros ganhos", "color": "#898781", "icon": "ti-plus", "type": TransactionType.income},
+    {"name": "Educacao", "color": "#0d9488", "icon": "ti-book", "type": TransactionType.expense},
+    {"name": "Vestuario", "color": "#f43f5e", "icon": "ti-shirt", "type": TransactionType.expense},
+    {"name": "Outros gastos", "color": "#64748b", "icon": "ti-dots", "type": TransactionType.expense},
+    {"name": "Salario", "color": "#16a34a", "icon": "ti-cash", "type": TransactionType.income},
+    {"name": "Freelance", "color": "#2563eb", "icon": "ti-briefcase", "type": TransactionType.income},
+    {"name": "Investimentos", "color": "#9333ea", "icon": "ti-trending-up", "type": TransactionType.income},
+    {"name": "Outros ganhos", "color": "#475569", "icon": "ti-plus", "type": TransactionType.income},
 ]
 
 @router.post("/register", response_model=Token, status_code=status.HTTP_201_CREATED)
