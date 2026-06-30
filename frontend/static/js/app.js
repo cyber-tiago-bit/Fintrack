@@ -100,6 +100,7 @@ function navigateTo(page) {
   if (page === 'categories') loadCategoriesPage();
   if (page === 'budgets') loadBudgetsPage();
   if (page === 'recurring') loadRecurringPage();
+  if (page === 'goals') loadGoalsPage();
 }
 
 function updateMonthDisplay() {
@@ -520,4 +521,114 @@ async function deleteRecurring(id) {
   await apiFetch(`/api/recurring/${id}`, { method: 'DELETE' });
   toast('Recorrente excluido.');
   loadRecurringPage();
+}
+// ── GOALS ────────────────────────────────────────────────────────────────────
+async function loadGoalsPage() {
+  const grid = document.getElementById('goalsGrid');
+  grid.innerHTML = '<p style="color:var(--text-3)">Carregando...</p>';
+  const goals = await apiFetch('/api/goals/');
+  if (!goals.length) {
+    grid.innerHTML = '<div class="empty-state"><i class="ti ti-star"></i><p>Nenhum objetivo cadastrado.<br>Clique em "Novo objetivo" para comecar.</p></div>';
+    return;
+  }
+  grid.innerHTML = goals.map(g => {
+    const pct = Math.min(g.percentage, 100);
+    const concluido = g.percentage >= 100;
+    return `<div class="card" style="margin-bottom:0">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div style="width:40px;height:40px;border-radius:10px;background:${g.color}20;display:flex;align-items:center;justify-content:center;">
+            <i class="ti ${g.icon}" style="color:${g.color};font-size:20px;"></i>
+          </div>
+          <div>
+            <div style="font-weight:600;font-size:15px;">${g.name}</div>
+            ${g.description ? `<div style="font-size:11px;color:var(--text-3)">${g.description}</div>` : ''}
+          </div>
+        </div>
+        <button class="btn-danger" onclick="deleteGoal(${g.id})"><i class="ti ti-trash"></i></button>
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+        <span style="font-size:13px;color:var(--text-2)">Guardado: <strong>${fmtMoney(g.current_amount)}</strong></span>
+        <span style="font-size:13px;color:var(--text-2)">Meta: <strong>${fmtMoney(g.target_amount)}</strong></span>
+      </div>
+      <div class="progress" style="height:8px;">
+        <div class="progress-fill" style="width:${pct}%;background:${concluido ? '#16a34a' : g.color};"></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-top:6px;font-size:11px;color:var(--text-3);">
+        <span>${concluido ? '🎉 Objetivo concluido!' : `Faltam ${fmtMoney(g.remaining)}`}</span>
+        <span>${g.percentage}%${g.deadline ? ` · Prazo: ${fmtDate(g.deadline)}` : ''}</span>
+      </div>
+      ${!concluido ? `
+      <button class="btn btn-ghost" style="width:100%;margin-top:10px;font-size:13px;" onclick="openDeposit(${g.id}, '${g.name}')">
+        <i class="ti ti-plus"></i> Adicionar valor
+      </button>` : ''}
+    </div>`;
+  }).join('');
+}
+
+function openNewGoal() {
+  document.getElementById('goalModal').classList.remove('hidden');
+}
+
+function closeGoalModal() {
+  document.getElementById('goalModal').classList.add('hidden');
+  document.getElementById('goalForm').reset();
+}
+
+async function submitGoal(e) {
+  e.preventDefault();
+  const btn = e.target.querySelector('.btn-primary');
+  btn.disabled = true; btn.textContent = 'Salvando...';
+  try {
+    await apiFetch('/api/goals/', {
+      method: 'POST',
+      body: JSON.stringify({
+        name: document.getElementById('goalName').value,
+        description: document.getElementById('goalDesc').value || null,
+        target_amount: parseFloat(document.getElementById('goalAmount').value),
+        deadline: document.getElementById('goalDeadline').value || null,
+        icon: document.getElementById('goalIcon').value,
+        color: document.getElementById('goalColor').value,
+      })
+    });
+    toast('Objetivo criado!');
+    closeGoalModal();
+    loadGoalsPage();
+  } catch (err) { toast(err.message, 'error'); }
+  finally { btn.disabled = false; btn.textContent = 'Salvar'; }
+}
+
+function openDeposit(id, name) {
+  document.getElementById('depositGoalId').value = id;
+  document.getElementById('depositTitle').textContent = `Adicionar valor — ${name}`;
+  document.getElementById('depositModal').classList.remove('hidden');
+}
+
+function closeDepositModal() {
+  document.getElementById('depositModal').classList.add('hidden');
+  document.getElementById('depositForm').reset();
+}
+
+async function submitDeposit(e) {
+  e.preventDefault();
+  const btn = e.target.querySelector('.btn-primary');
+  btn.disabled = true; btn.textContent = 'Salvando...';
+  const id = document.getElementById('depositGoalId').value;
+  try {
+    await apiFetch(`/api/goals/${id}/depositar`, {
+      method: 'POST',
+      body: JSON.stringify({ amount: parseFloat(document.getElementById('depositAmount').value) })
+    });
+    toast('Valor adicionado!');
+    closeDepositModal();
+    loadGoalsPage();
+  } catch (err) { toast(err.message, 'error'); }
+  finally { btn.disabled = false; btn.textContent = 'Confirmar'; }
+}
+
+async function deleteGoal(id) {
+  if (!confirm('Excluir este objetivo?')) return;
+  await apiFetch(`/api/goals/${id}`, { method: 'DELETE' });
+  toast('Objetivo excluido.');
+  loadGoalsPage();
 }

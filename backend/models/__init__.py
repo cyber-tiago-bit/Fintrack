@@ -1,1 +1,1 @@
-from . import user, transaction, budget, recurring
+from . import user, transaction, budget, recurring, goal

@@ -71,7 +71,10 @@
       <button class="nav-item active" id="nav-dashboard" onclick="navigateTo('dashboard')">
         <i class="ti ti-layout-dashboard"></i> Dashboard
       </button>
-<button class="nav-item" id="nav-recurring" onclick="navigateTo('recurring')">
+<button class="nav-item" id="nav-goals" onclick="navigateTo('goals')">
+  <i class="ti ti-star"></i> Objetivos
+</button>
+      <button class="nav-item" id="nav-recurring" onclick="navigateTo('recurring')">
   <i class="ti ti-repeat"></i> Recorrentes
 </button>
       <button class="nav-item" id="nav-budgets" onclick="navigateTo('budgets')">
@@ -190,6 +193,19 @@
     <!-- ── CATEGORIES PAGE ── -->
 <!-- ── BUDGETS PAGE ── -->
 <!-- ── RECURRING PAGE ── -->
+<!-- ── GOALS PAGE ── -->
+<div id="page-goals" class="page hidden">
+  <div class="page-header" style="display:flex;justify-content:space-between;align-items:flex-start;">
+    <div>
+      <h1>Objetivos</h1>
+      <p>Suas metas financeiras de longo prazo</p>
+    </div>
+    <button class="btn btn-primary" onclick="openNewGoal()">
+      <i class="ti ti-plus"></i> Novo objetivo
+    </button>
+  </div>
+  <div id="goalsGrid" style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;"></div>
+</div>
 <div id="page-recurring" class="page hidden">
   <div class="page-header" style="display:flex;justify-content:space-between;align-items:flex-start;">
     <div>
@@ -254,6 +270,75 @@
 ═══════════════════════════════════════════════════════════════════ -->
 <!-- BUDGET MODAL -->
 <!-- RECURRING MODAL -->
+<!-- GOAL MODAL -->
+<div id="goalModal" class="modal-overlay hidden" onclick="if(event.target===this)closeGoalModal()">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Novo objetivo</div>
+      <button class="modal-close" onclick="closeGoalModal()"><i class="ti ti-x"></i></button>
+    </div>
+    <form id="goalForm" onsubmit="submitGoal(event)">
+      <div class="form-group">
+        <label>Nome do objetivo</label>
+        <input type="text" id="goalName" placeholder="Ex: Viagem para Europa, Carro novo..." required>
+      </div>
+      <div class="form-group">
+        <label>Descricao (opcional)</label>
+        <input type="text" id="goalDesc" placeholder="Detalhes do objetivo...">
+      </div>
+      <div class="form-row cols-2">
+        <div class="form-group">
+          <label>Valor alvo (R$)</label>
+          <input type="number" id="goalAmount" placeholder="0,00" step="0.01" min="1" required>
+        </div>
+        <div class="form-group">
+          <label>Prazo (opcional)</label>
+          <input type="date" id="goalDeadline">
+        </div>
+      </div>
+      <div class="form-row cols-2">
+        <div class="form-group">
+          <label>Icone</label>
+          <select id="goalIcon">
+            <option value="ti-star">Estrela</option>
+            <option value="ti-car">Carro</option>
+            <option value="ti-home">Casa</option>
+            <option value="ti-plane">Viagem</option>
+            <option value="ti-device-mobile">Celular</option>
+            <option value="ti-school">Educacao</option>
+            <option value="ti-heart">Saude</option>
+            <option value="ti-pig-money">Poupanca</option>
+            <option value="ti-briefcase">Negocio</option>
+            <option value="ti-gift">Presente</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Cor</label>
+          <input type="color" id="goalColor" value="#2563eb" style="height:42px;padding:4px;">
+        </div>
+      </div>
+      <button type="submit" class="btn btn-primary btn-full">Salvar objetivo</button>
+    </form>
+  </div>
+</div>
+
+<!-- DEPOSIT MODAL -->
+<div id="depositModal" class="modal-overlay hidden" onclick="if(event.target===this)closeDepositModal()">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="depositTitle">Adicionar valor</div>
+      <button class="modal-close" onclick="closeDepositModal()"><i class="ti ti-x"></i></button>
+    </div>
+    <form id="depositForm" onsubmit="submitDeposit(event)">
+      <input type="hidden" id="depositGoalId">
+      <div class="form-group">
+        <label>Valor a adicionar (R$)</label>
+        <input type="number" id="depositAmount" placeholder="0,00" step="0.01" min="0.01" required>
+      </div>
+      <button type="submit" class="btn btn-primary btn-full">Confirmar</button>
+    </form>
+  </div>
+</div>
 <div id="recurringModal" class="modal-overlay hidden" onclick="if(event.target===this)closeRecurringModal()">
   <div class="modal">
     <div class="modal-header">
