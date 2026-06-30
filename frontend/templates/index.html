@@ -71,7 +71,10 @@
       <button class="nav-item active" id="nav-dashboard" onclick="navigateTo('dashboard')">
         <i class="ti ti-layout-dashboard"></i> Dashboard
       </button>
-<button class="nav-item" id="nav-goals" onclick="navigateTo('goals')">
+<button class="nav-item" id="nav-accounts" onclick="navigateTo('accounts')">
+  <i class="ti ti-wallet"></i> Contas
+</button>
+      <button class="nav-item" id="nav-goals" onclick="navigateTo('goals')">
   <i class="ti ti-star"></i> Objetivos
 </button>
       <button class="nav-item" id="nav-recurring" onclick="navigateTo('recurring')">
@@ -194,6 +197,19 @@
 <!-- ── BUDGETS PAGE ── -->
 <!-- ── RECURRING PAGE ── -->
 <!-- ── GOALS PAGE ── -->
+<!-- ── ACCOUNTS PAGE ── -->
+<div id="page-accounts" class="page hidden">
+  <div class="page-header" style="display:flex;justify-content:space-between;align-items:flex-start;">
+    <div>
+      <h1>Contas</h1>
+      <p>Gerencie suas carteiras e contas bancarias</p>
+    </div>
+    <button class="btn btn-primary" onclick="openNewAccount()">
+      <i class="ti ti-plus"></i> Nova conta
+    </button>
+  </div>
+  <div id="accountsGrid" style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;"></div>
+</div>
 <div id="page-goals" class="page hidden">
   <div class="page-header" style="display:flex;justify-content:space-between;align-items:flex-start;">
     <div>
@@ -271,6 +287,101 @@
 <!-- BUDGET MODAL -->
 <!-- RECURRING MODAL -->
 <!-- GOAL MODAL -->
+<!-- ACCOUNT MODAL -->
+<div id="accountModal" class="modal-overlay hidden" onclick="if(event.target===this)closeAccountModal()">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Nova conta</div>
+      <button class="modal-close" onclick="closeAccountModal()"><i class="ti ti-x"></i></button>
+    </div>
+    <form id="accountForm" onsubmit="submitAccount(event)">
+      <div class="form-group">
+        <label>Nome da conta</label>
+        <input type="text" id="accountName" placeholder="Ex: Nubank, Itau, Carteira..." required>
+      </div>
+      <div class="form-group">
+        <label>Tipo</label>
+        <select id="accountType">
+          <option value="Conta corrente">Conta corrente</option>
+          <option value="Conta poupanca">Conta poupanca</option>
+          <option value="Carteira fisica">Carteira fisica</option>
+          <option value="Conta digital">Conta digital</option>
+          <option value="Investimento">Investimento</option>
+          <option value="Outro">Outro</option>
+        </select>
+      </div>
+      <div class="form-row cols-2">
+        <div class="form-group">
+          <label>Saldo inicial (R$)</label>
+          <input type="number" id="accountBalance" placeholder="0,00" step="0.01" value="0">
+        </div>
+        <div class="form-group">
+          <label>Cor</label>
+          <input type="color" id="accountColor" value="#2563eb" style="height:42px;padding:4px;">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Icone</label>
+        <select id="accountIcon">
+          <option value="ti-wallet">Carteira</option>
+          <option value="ti-building-bank">Banco</option>
+          <option value="ti-credit-card">Cartao</option>
+          <option value="ti-cash">Dinheiro</option>
+          <option value="ti-pig-money">Poupanca</option>
+          <option value="ti-trending-up">Investimento</option>
+        </select>
+      </div>
+      <button type="submit" class="btn btn-primary btn-full">Salvar conta</button>
+    </form>
+  </div>
+</div>
+
+<!-- AJUSTE MODAL -->
+<div id="ajusteModal" class="modal-overlay hidden" onclick="if(event.target===this)closeAjusteModal()">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="ajusteTitle">Ajustar saldo</div>
+      <button class="modal-close" onclick="closeAjusteModal()"><i class="ti ti-x"></i></button>
+    </div>
+    <form id="ajusteForm" onsubmit="submitAjuste(event)">
+      <input type="hidden" id="ajusteAccountId">
+      <div class="form-group">
+        <label>Valor (use negativo para subtrair)</label>
+        <input type="number" id="ajusteAmount" placeholder="Ex: 100 ou -50" step="0.01" required>
+      </div>
+      <button type="submit" class="btn btn-primary btn-full">Confirmar</button>
+    </form>
+  </div>
+</div>
+
+<!-- TRANSFER MODAL -->
+<div id="transferModal" class="modal-overlay hidden" onclick="if(event.target===this)closeTransferModal()">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Transferir entre contas</div>
+      <button class="modal-close" onclick="closeTransferModal()"><i class="ti ti-x"></i></button>
+    </div>
+    <form id="transferForm" onsubmit="submitTransfer(event)">
+      <div class="form-group">
+        <label>Conta de origem</label>
+        <select id="transferFrom"></select>
+      </div>
+      <div class="form-group">
+        <label>Conta de destino</label>
+        <select id="transferTo"></select>
+      </div>
+      <div class="form-group">
+        <label>Valor (R$)</label>
+        <input type="number" id="transferAmount" placeholder="0,00" step="0.01" min="0.01" required>
+      </div>
+      <div class="form-group">
+        <label>Descricao (opcional)</label>
+        <input type="text" id="transferDesc" placeholder="Ex: Reserva de emergencia...">
+      </div>
+      <button type="submit" class="btn btn-primary btn-full">Transferir</button>
+    </form>
+  </div>
+</div>
 <div id="goalModal" class="modal-overlay hidden" onclick="if(event.target===this)closeGoalModal()">
   <div class="modal">
     <div class="modal-header">

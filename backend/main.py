@@ -6,7 +6,7 @@ import os
 
 from .core.database import Base, engine
 from .models import user, transaction
-from .routers import auth, categories, transactions, budgets, recurring, goals
+from .routers import auth, categories, transactions, budgets, recurring, goals, accounts
 
 Base.metadata.create_all(bind=engine)
 
@@ -30,6 +30,7 @@ app.include_router(transactions.router)
 app.include_router(budgets.router)
 app.include_router(recurring.router)
 app.include_router(goals.router)
+app.include_router(accounts.router)
 frontend_path = os.path.join(os.path.dirname(__file__), "../frontend")
 app.mount("/static", StaticFiles(directory=os.path.join(frontend_path, "static")), name="static")
 

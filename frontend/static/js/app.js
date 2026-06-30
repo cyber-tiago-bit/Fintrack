@@ -101,6 +101,7 @@ function navigateTo(page) {
   if (page === 'budgets') loadBudgetsPage();
   if (page === 'recurring') loadRecurringPage();
   if (page === 'goals') loadGoalsPage();
+  if (page === 'accounts') loadAccountsPage();
 }
 
 function updateMonthDisplay() {
@@ -631,4 +632,151 @@ async function deleteGoal(id) {
   await apiFetch(`/api/goals/${id}`, { method: 'DELETE' });
   toast('Objetivo excluido.');
   loadGoalsPage();
+}
+// ── ACCOUNTS ─────────────────────────────────────────────────────────────────
+async function loadAccountsPage() {
+  const grid = document.getElementById('accountsGrid');
+  grid.innerHTML = '<p style="color:var(--text-3)">Carregando...</p>';
+  const accounts = await apiFetch('/api/accounts/');
+  if (!accounts.length) {
+    grid.innerHTML = '<div class="empty-state"><i class="ti ti-wallet"></i><p>Nenhuma conta cadastrada.<br>Clique em "Nova conta" para comecar.</p></div>';
+    return;
+  }
+  const total = accounts.reduce((a, c) => a + c.balance, 0);
+  grid.innerHTML = `
+    <div class="card" style="grid-column:1/-1;background:linear-gradient(135deg,#1e3a5f,#1e40af);color:#fff;border:none;">
+      <div style="font-size:12px;opacity:0.8;margin-bottom:4px;">Saldo total em todas as contas</div>
+      <div style="font-size:28px;font-weight:600;">${fmtMoney(total)}</div>
+    </div>
+    ${accounts.map(a => `
+    <div class="card" style="margin-bottom:0">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div style="width:42px;height:42px;border-radius:10px;background:${a.color}20;display:flex;align-items:center;justify-content:center;">
+            <i class="ti ${a.icon}" style="color:${a.color};font-size:20px;"></i>
+          </div>
+          <div>
+            <div style="font-weight:600;font-size:15px;">${a.name}</div>
+            <div style="font-size:11px;color:var(--text-3)">${a.type}</div>
+          </div>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-size:18px;font-weight:600;color:${a.balance >= 0 ? '#16a34a' : '#dc2626'}">${fmtMoney(a.balance)}</div>
+          <div style="display:flex;gap:6px;margin-top:4px;">
+            <button class="btn btn-ghost" style="font-size:11px;padding:4px 8px;" onclick="openAjuste(${a.id}, '${a.name}')">
+              <i class="ti ti-adjustments"></i> Ajustar
+            </button>
+            <button class="btn-danger" onclick="deleteAccount(${a.id})"><i class="ti ti-trash"></i></button>
+          </div>
+        </div>
+      </div>
+    </div>`).join('')}
+    <div class="card" style="margin-bottom:0;border:2px dashed var(--border);background:transparent;display:flex;align-items:center;justify-content:center;cursor:pointer;min-height:80px;" onclick="openTransfer()">
+      <div style="text-align:center;color:var(--text-3);">
+        <i class="ti ti-transfer" style="font-size:24px;"></i>
+        <div style="font-size:13px;margin-top:4px;">Transferir entre contas</div>
+      </div>
+    </div>
+  `;
+}
+
+function openNewAccount() {
+  document.getElementById('accountModal').classList.remove('hidden');
+}
+
+function closeAccountModal() {
+  document.getElementById('accountModal').classList.add('hidden');
+  document.getElementById('accountForm').reset();
+}
+
+async function submitAccount(e) {
+  e.preventDefault();
+  const btn = e.target.querySelector('.btn-primary');
+  btn.disabled = true; btn.textContent = 'Salvando...';
+  try {
+    await apiFetch('/api/accounts/', {
+      method: 'POST',
+      body: JSON.stringify({
+        name: document.getElementById('accountName').value,
+        type: document.getElementById('accountType').value,
+        balance: parseFloat(document.getElementById('accountBalance').value || 0),
+        color: document.getElementById('accountColor').value,
+        icon: document.getElementById('accountIcon').value,
+      })
+    });
+    toast('Conta criada!');
+    closeAccountModal();
+    loadAccountsPage();
+  } catch (err) { toast(err.message, 'error'); }
+  finally { btn.disabled = false; btn.textContent = 'Salvar'; }
+}
+
+function openAjuste(id, name) {
+  document.getElementById('ajusteAccountId').value = id;
+  document.getElementById('ajusteTitle').textContent = `Ajustar saldo — ${name}`;
+  document.getElementById('ajusteModal').classList.remove('hidden');
+}
+
+function closeAjusteModal() {
+  document.getElementById('ajusteModal').classList.add('hidden');
+  document.getElementById('ajusteForm').reset();
+}
+
+async function submitAjuste(e) {
+  e.preventDefault();
+  const btn = e.target.querySelector('.btn-primary');
+  btn.disabled = true; btn.textContent = 'Salvando...';
+  const id = document.getElementById('ajusteAccountId').value;
+  try {
+    await apiFetch(`/api/accounts/${id}/ajustar`, {
+      method: 'POST',
+      body: JSON.stringify({ amount: parseFloat(document.getElementById('ajusteAmount').value) })
+    });
+    toast('Saldo ajustado!');
+    closeAjusteModal();
+    loadAccountsPage();
+  } catch (err) { toast(err.message, 'error'); }
+  finally { btn.disabled = false; btn.textContent = 'Confirmar'; }
+}
+
+function openTransfer() {
+  document.getElementById('transferModal').classList.remove('hidden');
+  apiFetch('/api/accounts/').then(accounts => {
+    const opts = accounts.map(a => `<option value="${a.id}">${a.name} (${fmtMoney(a.balance)})</option>`).join('');
+    document.getElementById('transferFrom').innerHTML = opts;
+    document.getElementById('transferTo').innerHTML = opts;
+  });
+}
+
+function closeTransferModal() {
+  document.getElementById('transferModal').classList.add('hidden');
+  document.getElementById('transferForm').reset();
+}
+
+async function submitTransfer(e) {
+  e.preventDefault();
+  const btn = e.target.querySelector('.btn-primary');
+  btn.disabled = true; btn.textContent = 'Transferindo...';
+  try {
+    await apiFetch('/api/accounts/transferir', {
+      method: 'POST',
+      body: JSON.stringify({
+        from_account_id: parseInt(document.getElementById('transferFrom').value),
+        to_account_id: parseInt(document.getElementById('transferTo').value),
+        amount: parseFloat(document.getElementById('transferAmount').value),
+        description: document.getElementById('transferDesc').value || 'Transferencia entre contas',
+      })
+    });
+    toast('Transferencia realizada!');
+    closeTransferModal();
+    loadAccountsPage();
+  } catch (err) { toast(err.message, 'error'); }
+  finally { btn.disabled = false; btn.textContent = 'Transferir'; }
+}
+
+async function deleteAccount(id) {
+  if (!confirm('Excluir esta conta?')) return;
+  await apiFetch(`/api/accounts/${id}`, { method: 'DELETE' });
+  toast('Conta excluida.');
+  loadAccountsPage();
 }
