@@ -71,7 +71,10 @@
       <button class="nav-item active" id="nav-dashboard" onclick="navigateTo('dashboard')">
         <i class="ti ti-layout-dashboard"></i> Dashboard
       </button>
-<button class="nav-item" id="nav-accounts" onclick="navigateTo('accounts')">
+<button class="nav-item" id="nav-ai" onclick="navigateTo('ai')">
+  <i class="ti ti-robot"></i> Assistente IA
+</button>
+      <button class="nav-item" id="nav-accounts" onclick="navigateTo('accounts')">
   <i class="ti ti-wallet"></i> Contas
 </button>
       <button class="nav-item" id="nav-goals" onclick="navigateTo('goals')">
@@ -198,6 +201,23 @@
 <!-- ── RECURRING PAGE ── -->
 <!-- ── GOALS PAGE ── -->
 <!-- ── ACCOUNTS PAGE ── -->
+<!-- ── AI PAGE ── -->
+<div id="page-ai" class="page hidden">
+  <div class="page-header">
+    <h1>Assistente IA</h1>
+    <p>Converse com o FinBot sobre suas financas</p>
+  </div>
+  <div class="card" style="display:flex;flex-direction:column;height:calc(100vh - 220px);">
+    <div id="chatMessages" style="flex:1;overflow-y:auto;padding:0.5rem 0;margin-bottom:1rem;"></div>
+    <div style="display:flex;gap:8px;border-top:1px solid var(--border);padding-top:1rem;">
+      <input type="text" id="chatInput" placeholder="Pergunte sobre suas financas..." onkeydown="handleChatKey(event)"
+        style="flex:1;padding:10px 14px;border:1px solid var(--border);border-radius:var(--radius);font-size:14px;font-family:var(--font-body);">
+      <button class="btn btn-primary" onclick="sendChatMessage()">
+        <i class="ti ti-send"></i>
+      </button>
+    </div>
+  </div>
+</div>
 <div id="page-accounts" class="page hidden">
   <div class="page-header" style="display:flex;justify-content:space-between;align-items:flex-start;">
     <div>

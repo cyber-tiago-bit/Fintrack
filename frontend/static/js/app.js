@@ -102,6 +102,7 @@ function navigateTo(page) {
   if (page === 'recurring') loadRecurringPage();
   if (page === 'goals') loadGoalsPage();
   if (page === 'accounts') loadAccountsPage();
+  if (page === 'ai') loadAiPage();
 }
 
 function updateMonthDisplay() {
@@ -779,4 +780,77 @@ async function deleteAccount(id) {
   await apiFetch(`/api/accounts/${id}`, { method: 'DELETE' });
   toast('Conta excluida.');
   loadAccountsPage();
+}
+// ── AI CHAT ──────────────────────────────────────────────────────────────────
+async function loadAiPage() {
+  document.getElementById('chatMessages').innerHTML = `
+    <div style="display:flex;gap:10px;margin-bottom:1rem;">
+      <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#2563eb,#7c3aed);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+        <i class="ti ti-robot" style="color:#fff;font-size:18px;"></i>
+      </div>
+      <div style="background:var(--surface2);border-radius:12px;padding:12px 16px;max-width:80%;font-size:14px;line-height:1.6;">
+        Ola! Sou o <strong>FinBot</strong>, seu assistente financeiro. 🤖<br><br>
+        Posso analisar seus gastos, identificar onde voce pode economizar e responder perguntas sobre suas financas do mes.<br><br>
+        <strong>Exemplos do que pode me perguntar:</strong><br>
+        • "Como estao meus gastos esse mes?"<br>
+        • "Em qual categoria gastei mais?"<br>
+        • "Estou dentro das minhas metas?"<br>
+        • "Como posso economizar mais?"
+      </div>
+    </div>`;
+}
+
+function addChatMessage(text, isUser) {
+  const container = document.getElementById('chatMessages');
+  const div = document.createElement('div');
+  div.style.cssText = 'display:flex;gap:10px;margin-bottom:1rem;' + (isUser ? 'flex-direction:row-reverse;' : '');
+  div.innerHTML = `
+    <div style="width:36px;height:36px;border-radius:50%;background:${isUser ? '#e5e7eb' : 'linear-gradient(135deg,#2563eb,#7c3aed)'};display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+      <i class="ti ${isUser ? 'ti-user' : 'ti-robot'}" style="color:${isUser ? '#374151' : '#fff'};font-size:18px;"></i>
+    </div>
+    <div style="background:${isUser ? '#2563eb' : 'var(--surface2)'};color:${isUser ? '#fff' : 'var(--text)'};border-radius:12px;padding:12px 16px;max-width:80%;font-size:14px;line-height:1.6;">
+      ${text.replace(/\n/g, '<br>')}
+    </div>`;
+  container.appendChild(div);
+  container.scrollTop = container.scrollHeight;
+}
+
+async function sendChatMessage() {
+  const input = document.getElementById('chatInput');
+  const msg = input.value.trim();
+  if (!msg) return;
+
+  input.value = '';
+  addChatMessage(msg, true);
+
+  const typing = document.createElement('div');
+  typing.id = 'typing';
+  typing.style.cssText = 'display:flex;gap:10px;margin-bottom:1rem;';
+  typing.innerHTML = `
+    <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#2563eb,#7c3aed);display:flex;align-items:center;justify-content:center;">
+      <i class="ti ti-robot" style="color:#fff;font-size:18px;"></i>
+    </div>
+    <div style="background:var(--surface2);border-radius:12px;padding:12px 16px;font-size:14px;color:var(--text-3);">
+      <i class="ti ti-dots" style="animation:pulse 1s infinite;"></i> Analisando suas financas...
+    </div>`;
+  document.getElementById('chatMessages').appendChild(typing);
+
+  try {
+    const data = await apiFetch('/api/ai/chat', {
+      method: 'POST',
+      body: JSON.stringify({ message: msg, month: currentMonth, year: currentYear })
+    });
+    document.getElementById('typing')?.remove();
+    addChatMessage(data.response, false);
+  } catch (err) {
+    document.getElementById('typing')?.remove();
+    addChatMessage('Desculpe, ocorreu um erro ao processar sua pergunta. Tente novamente.', false);
+  }
+}
+
+function handleChatKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendChatMessage();
+  }
 }
